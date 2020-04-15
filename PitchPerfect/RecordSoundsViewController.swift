@@ -11,8 +11,9 @@ import AVFoundation
 
 class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     
-    // MARK: Variables for delegation
+    // MARK: Variables & Definitions
     var audioRecorder: AVAudioRecorder!
+    let segueID : String = "stopRecording"
 
     // MARK: Label and Button IBOutlets
     @IBOutlet weak var recordingButton: UIButton!
@@ -37,9 +38,7 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     // MARK: Record Button Action
     @IBAction func recordAudio(_ sender: Any) {
         // Set state of the buttons, including change label text to provide feedback that recording is in progress
-        recordingLabel.text = "Recording in Progress"
-        stopRecordingButton.isEnabled = true
-        recordingButton.isEnabled = false
+        setupUI(isRecording: true)
         
         // Set-up recording file/storage for recording audio
         let dirPath = NSSearchPathForDirectoriesInDomains(.documentDirectory,.userDomainMask, true)[0] as String
@@ -65,14 +64,18 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         // Set state of buttons and update label to reflect ready to initiate new recording
         // Assumption that this processing will happen fast enough that new recording will not be requested
         // (i.e. button smashing on record button) before this recording is stoped (line 73)
-        stopRecordingButton.isEnabled = false
-        recordingButton.isEnabled = true
-        recordingLabel.text = "Tap to Record"
+        setupUI(isRecording: false)
         
         // Stop recording and stop session
         audioRecorder.stop()
         let audioSession = AVAudioSession.sharedInstance()
         try! audioSession.setActive(false)
+    }
+    
+    func setupUI(isRecording: Bool){
+        stopRecordingButton.isEnabled = isRecording
+        recordingButton.isEnabled = !isRecording
+        recordingLabel.text = isRecording ? "Recording in Progress" : "Tap to Record"
     }
     
     //MARK: Delegate function performed when recording finished
@@ -86,7 +89,7 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     
     //MARK: Extension for when stop record segue requested
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "stopRecording" {
+        if segue.identifier == segueID {
             // Get the new view controller using segue.destination.
             let playSoundsVC = segue.destination as! PlaySoundsViewController
             let recordedAudioURL = sender as! URL
